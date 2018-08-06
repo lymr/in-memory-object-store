@@ -115,11 +115,10 @@ class InMemoryObjectStorageSuite extends FunSuite with BeforeAndAfterEach {
     val inputContent = "some-content"
     when(mockDisk.allocate(inputContent.length)).thenReturn(InitializeSpace(inputContent.length))
     objectStorage.write(id = 21, inputContent.getBytes, append = false)
-
     val objMetadata = objectStorage.readMetadata(id = 21)
+    Thread.sleep(3)
 
     val content = objectStorage.readStrict(id = 21)
-
     val updatedObjMetadata = objectStorage.readMetadata(id = 21)
 
     assert(updatedObjMetadata.get.lastAccessTime > objMetadata.get.lastAccessTime)
