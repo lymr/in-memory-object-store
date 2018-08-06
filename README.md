@@ -1,14 +1,22 @@
-# In-Memory Objects Store
+# In-Memory Object Store
 An In-Memory Object Store in Scala 
 
 [![Build Status](https://travis-ci.org/lymr/in-memory-object-store.svg?branch=master)](https://travis-ci.org/lymr/in-memory-object-store)
 
-## Execution:
-Compile project: `sbt compile`
+## Design Considerations
+An in memory storage with fixed capacity and block size (configurable on initialization), each object in the store is
+composed by a 2D resizable array of bytes where the first dimension has a fixed size (the block size).
 
-Test project : `sbt test`
+The main motivation behind slicing each object into blocks:
+- Amplified performance for append operations, only newly appended data is copied at object's tail.
+- Allocating new blocks only when new data length is greater than available space at object's last block, 
+in case when new appended content fits the available space in last block it just being copy to that space 
+otherwise additional blocks are allocated and added to current space tail.
+- Amortized performance of sequential read, as read operation on RAM are significantly faster than random reads.
+- Additional memory can be allocated as long as there is available memory in a block size.
+- Deallocate unused space with no need to copy data.
 
-## Example 
+## Example
 ```scala
 import com.lymr.memos.InMemoryObjectStore
 
