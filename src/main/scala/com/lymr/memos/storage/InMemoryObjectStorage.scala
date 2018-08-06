@@ -124,5 +124,4 @@ object InMemoryObjectStorage {
       StoreObject(ObjectMetadata.create(), InMemoryBlob.withContent(content, disk))
     }
   }
-
 }

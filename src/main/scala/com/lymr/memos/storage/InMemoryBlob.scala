@@ -2,6 +2,8 @@ package com.lymr.memos.storage
 
 import com.lymr.memos.storage.InMemoryBlob._
 
+import scala.annotation.tailrec
+
 /** An in memory space represented by a `Vector` of separate byte array blocks where each byte
   * array block has a fixed size.
   *
@@ -71,7 +73,7 @@ private[storage] class InMemoryBlob(space: Vector[Array[Byte]], val totalSize: I
       throw new IndexOutOfBoundsException(
         s"requested length '$n' from offset '$offset' exceeds current length of '$size'")
 
-    cloneContent(offset, n)
+    cloneContent(space, offset, n, disk.blockSize)
   }
 
   /** Deallocate blob's space */
@@ -83,10 +85,10 @@ private[storage] class InMemoryBlob(space: Vector[Array[Byte]], val totalSize: I
     val additionalSize = content.length - available
     if (additionalSize > 0) {
       val alloc = disk.allocate(additionalSize)
-      val copied = copyContent(space ++ alloc, content, offset)
+      val copied = copyContent(space ++ alloc, content, offset, disk.blockSize)
       new InMemoryBlob(copied, totalSize + calculateSize(alloc), totalSize + additionalSize, disk)
     } else {
-      val copied = copyContent(space, content, offset)
+      val copied = copyContent(space, content, offset, disk.blockSize)
       new InMemoryBlob(copied, totalSize, offset + content.length, disk)
     }
   }
@@ -100,38 +102,46 @@ private[storage] class InMemoryBlob(space: Vector[Array[Byte]], val totalSize: I
       } else {
         space
       }
-    val copied = copyContent(allocation, content, offset = 0)
+    val copied = copyContent(allocation, content, offset = 0, disk.blockSize)
     new InMemoryBlob(copied, calculateSize(copied), content.length, disk)
   }
 
-  private def copyContent(space: Vector[Array[Byte]], content: Array[Byte], offset: Int): Vector[Array[Byte]] = {
-    val cnt = content.iterator
-    var (idx, pos) = calculateBlockPosition(offset, disk.blockSize)
-    while (cnt.hasNext) {
-      space(idx)(pos) = cnt.next()
-      pos += 1
-      if (pos >= disk.blockSize) {
-        idx += 1
-        pos = 0
+  private def copyContent(space: Vector[Array[Byte]],
+                          content: Array[Byte],
+                          offset: Int,
+                          block: Int): Vector[Array[Byte]] = {
+
+    @tailrec
+    def goCopy(cntItr: Iterator[Byte], i: Int, j: Int): Vector[Array[Byte]] = {
+      if (!cntItr.hasNext) {
+        space
+      } else {
+        space(i)(j) = cntItr.next()
+        val (idx, pos) = if (j + 1 >= block) (i + 1, 0) else (i, j + 1)
+        goCopy(cntItr, idx, pos)
       }
     }
-    space
+
+    val (idx, pos) = calculateBlockPosition(offset, disk.blockSize)
+    goCopy(content.iterator, idx, pos)
   }
 
-  private def cloneContent(offset: Int, length: Int): Array[Byte] = {
-    var cur = 0
-    var (idx, pos) = calculateBlockPosition(offset, disk.blockSize)
+  private def cloneContent(space: Vector[Array[Byte]], offset: Int, length: Int, block: Int): Array[Byte] = {
     val clone = new Array[Byte](length)
-    while (cur < length) {
-      clone(cur) = space(idx)(pos)
-      cur += 1
-      pos += 1
-      if (pos >= disk.blockSize) {
-        idx += 1
-        pos = 0
+
+    @tailrec
+    def goClone(c: Int, i: Int, j: Int): Array[Byte] = {
+      if (c >= length) {
+        clone
+      } else {
+        clone(c) = space(i)(j)
+        val (idx, pos) = if (j + 1 >= block) (i + 1, 0) else (i, j + 1)
+        goClone(c + 1, idx, pos)
       }
     }
-    clone
+
+    val (idx, pos) = calculateBlockPosition(offset, disk.blockSize)
+    goClone(0, idx, pos)
   }
 
   private def calculateSize(vec: Vector[Array[Byte]]): Int = {

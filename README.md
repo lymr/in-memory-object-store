@@ -1,12 +1,14 @@
-#In-Memory Objects Store
-An In-Memory Object Store in Scala
+# In-Memory Objects Store
+An In-Memory Object Store in Scala 
 
-##Execution:
+[![Build Status](https://travis-ci.org/lymr/in-memory-object-store.svg?branch=master)](https://travis-ci.org/lymr/in-memory-object-store)
+
+## Execution:
 Compile project: `sbt compile`
 
 Test project : `sbt test`
 
-##Example 
+## Example 
 ```scala
 import com.lymr.memos.InMemoryObjectStore
 
@@ -41,25 +43,5 @@ assertResult(0)(memos.memoryUsed)
 assertResult(2048)(memos.memoryAvailable)
 ```
 
-##License
-MIT License
-
+## Copyright
 Copyright (c) 2018 Mor Levy
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
